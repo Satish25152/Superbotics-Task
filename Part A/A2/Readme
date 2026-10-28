@@ -1,0 +1,102 @@
+# A2 – PointsCalculator (PHP 8.2)
+
+## 1. Objective
+
+Create a PHP 8.2 class named `PointsCalculator` to calculate earned, spent, and expired reward points.
+
+## 2. Requirements
+
+- Accept an array of ledger entries.
+- Each entry contains `type`, `points`, and `date`.
+- `type` can be `earn` or `spend`.
+- `balance(): int` returns the remaining points.
+- `expiredPoints(string $today): int` returns unspent earned points older than 12 months.
+- Follow FIFO (First In, First Out) when spending points.
+- Include a test script with 5–6 sample entries.
+
+## 3. Files
+
+- **PointsCalculator.php** – Contains the main class and calculation logic.
+- **test_points.php** – Contains six sample entries and tests the results.
+
+## 4. Implementation
+
+### balance()
+
+- Calculates total earned points minus total spent points.
+- Returns the remaining ledger balance as an integer.
+- Does not automatically deduct expired points.
+
+### expiredPoints(string $today)
+
+- Accepts a date in `YYYY-MM-DD` format.
+- Calculates the expiry cutoff as 12 months before the given date.
+- Uses FIFO to determine which earned points remain unspent.
+- Counts only unspent points earned before the cutoff date.
+- Returns the total expired points as an integer.
+
+### FIFO Logic
+
+- Oldest earned points are spent first.
+- Example:
+  - Earn 100 points.
+  - Earn another 60 points.
+  - Spend 70 points.
+  - Remaining: 30 points from the first batch and 60 points from the second batch.
+
+## 5. Sample Test Data
+
+| Date | Type | Points |
+|---|---|---|
+| 2025-05-01 | earn | 100 |
+| 2025-10-28 | earn | 60 |
+| 2025-11-01 | spend | 70 |
+| 2026-01-10 | earn | 40 |
+| 2026-02-20 | spend | 20 |
+| 2026-06-01 | earn | 25 |
+
+Test date: **2026-10-28**
+
+## 6. Expected Output
+
+```text
+Balance: 135 points
+Expired as of 2026-10-28: 10 points
+Available after expiry: 125 points
+Test passed.
+```
+
+### Calculation
+
+- Total earned = 225 points.
+- Total spent = 90 points.
+- Balance = 225 - 90 = 135 points.
+- The oldest 100-point batch has 10 unspent points after FIFO spending.
+- Those 10 points are older than 12 months and have expired.
+- Available points = 135 - 10 = 125 points.
+
+## 7. Validation
+
+- Accepts only `earn` and `spend` entry types.
+- Accepts only positive integer points.
+- Validates date format.
+- Processes ledger entries chronologically.
+- Prevents spending more points than earned.
+
+## 8. How to Run
+
+**Requirements:** PHP 8.2
+
+Keep both PHP files in the same folder.
+
+Run the test using:
+
+```bash
+php test_points.php
+```
+
+The script prints the balance, expired points, available points, and test result.
+
+## 9. Conclusion
+
+The `PointsCalculator` class uses PHP 8.2 type hints and FIFO logic to calculate point balances and expiry accurately. The sample test demonstrates earning, spending, and expiry calculations.

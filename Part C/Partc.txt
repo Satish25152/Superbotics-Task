@@ -1,0 +1,55 @@
+Part C – Offline Redemption Scenario
+
+1. Store Redemptions Offline
+
+If a partner store loses internet connectivity, I would temporarily store redemption transactions in a local SQLite database.
+
+Each transaction would contain:
+
+Unique transaction ID (UUID)
+
+Customer ID and points redeemed
+
+Store ID, device ID, and timestamp
+
+Sync status (pending, synced, or rejected)
+
+2. Prevent Double Spending
+
+Before going offline, the server should reserve a limited number of points for offline use. These reserved points must be excluded from the customer's available online balance.
+
+The offline system should validate redemptions against its allocated balance and immediately update the local balance after each redemption.
+
+If no points were reserved, redemptions cannot be guaranteed safe. Such transactions should remain provisional or be declined.
+
+3. Synchronize When Internet Returns
+
+Once connectivity is restored:
+
+Send pending transactions to the Laravel API over HTTPS.
+
+Use the unique transaction ID to prevent duplicate processing.
+
+Process each redemption inside a database transaction with row locking.
+
+Validate the reserved balance and reject invalid transactions.
+
+Mark transactions as synced only after server confirmation.
+
+Retry failed network requests without creating duplicate redemptions.
+
+4. Possible Problems
+
+Multiple offline counters spending the same points.
+
+Power failures or corrupted local data.
+
+Duplicate requests during synchronization.
+
+Insufficient points or expired rewards.
+
+Incorrect device timestamps or unauthorized transactions.
+
+Solution: Allocate separate offline spending limits to each counter (or use a shared local database), maintain transaction logs, enforce server-side validation, and use unique transaction IDs with database transactions.
+
+Conclusion: Offline redemptions can be handled using local storage, reserved point balances, and reliable synchronization. Without advance reservations or a shared authoritative balance, double spending cannot be completely prevented during an internet outage.

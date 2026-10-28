@@ -1,0 +1,194 @@
+What does the code:
+    Connects to the shop database.
+    Fetches orders matching the requested category and calculates their total amount.
+    Displays the length of each order's note.
+
+Problems:
+No.	Problem	            PHP 7.4	    PHP 8.2	    Severity
+1	Dynamic property	Allowed	    Deprecated	Warning
+2	SQL injection	    Vulnerable	Vulnerable	Critical
+3	strlen(NULL)	    Allowed	    Deprecated	Warning
+4	create_function()	Deprecated	Removed	    Fatal error
+
+A1 – PHP 7.4 to PHP 8.2 Compatibility and Security Fix
+
+Overview
+
+The original PHP code contains compatibility issues with PHP 8.2 and an SQL injection vulnerability.
+
+The following changes fix these problems while preserving the original functionality.
+
+1. Dynamic Property Deprecation
+
+Problem Code (PHP 7.4):
+
+class Report { }
+$r = new Report();
+$r->total = 0;
+
+Problem: PHP 8.2 deprecates creating dynamic properties that are not declared in the class.
+
+Fixed Code:
+
+class Report {
+    public float $total = 0;
+}
+$r = new Report();
+
+Explanation: Declared the total property inside the class to avoid the deprecation warning.
+
+2. SQL Injection Vulnerability
+
+Problem Code:
+
+$cat = $_GET['cat'];
+
+$res = mysqli_query($conn,
+    "SELECT * FROM orders WHERE category = '$cat'");
+
+Problem: User input is directly included in the SQL query, allowing SQL injection.
+
+Fixed Code:
+
+$cat = $_GET['cat'] ?? '';
+
+$stmt = mysqli_prepare(
+    $conn,
+    "SELECT * FROM orders WHERE category = ?"
+);
+
+mysqli_stmt_bind_param($stmt, "s", $cat);
+mysqli_stmt_execute($stmt);
+
+$res = mysqli_stmt_get_result($stmt);
+
+Explanation: Used a prepared statement with parameter binding to prevent SQL injection. The ?? operator also handles a missing cat parameter.
+
+3. NULL Value Passed to strlen()
+
+Problem Code:
+
+echo strlen($row['note']) . "<br>";
+
+Problem: Passing NULL to strlen() is deprecated in PHP 8.2 and generates a warning.
+
+Fixed Code:
+
+echo strlen($row['note'] ?? '') . "<br>";
+
+Explanation: Replaced NULL values with an empty string to avoid the deprecation warning.
+
+4. Removed create_function()
+
+Problem Code:
+
+$sorted = create_function(
+    '$a,$b',
+    'return $a > $b;'
+);
+
+Problem: create_function() was deprecated in PHP 7.2 and removed in PHP 8.0. It causes a fatal error in PHP 8.2.
+
+Fixed Code:
+
+$sorted = function ($a, $b) {
+    return $a <=> $b;
+};
+
+Explanation: Replaced create_function() with an anonymous function. The spaceship operator returns -1, 0, or 1, making it suitable for sorting comparisons.
+
+5. Numeric Type Handling
+
+Problem Code:
+
+$r->total += $row['amount'];
+
+Problem: Database values may be returned as strings. Non-numeric strings can cause type errors during arithmetic in PHP 8.
+
+Fixed Code:
+
+$r->total += (float) $row['amount'];
+
+Explanation: Explicitly converted the amount to a float before adding it to the total. The database column should contain valid numeric values.
+
+6. Database Connection Handling
+
+Problem Code:
+
+$conn = mysqli_connect(
+    "localhost", "root", "", "shop"
+);
+
+Problem: The original code does not explicitly handle database connection errors.
+
+Fixed Code:
+
+try {
+    $conn = mysqli_connect(
+        "localhost", "root", "", "shop"
+    );
+} catch (mysqli_sql_exception $e) {
+    error_log($e->getMessage());
+    exit("Database connection failed");
+}
+
+Explanation: Added exception handling to manage connection failures without exposing database error details to users.
+
+7. Resource Cleanup
+
+Problem Code:
+
+// No explicit database resource cleanup
+
+Fixed Code:
+
+mysqli_stmt_close($stmt);
+mysqli_close($conn);
+
+Explanation: Closed the prepared statement and database connection after processing.
+
+Summary
+
+Issue
+
+Solution
+
+Dynamic property deprecated
+
+Declare the property inside the class
+
+SQL injection
+
+Use prepared statements
+
+Undefined GET parameter
+
+Use null coalescing operator
+
+NULL passed to strlen()
+
+Provide an empty string fallback
+
+create_function() removed
+
+Use an anonymous function
+
+Numeric type handling
+
+Explicit float conversion
+
+Connection failure
+
+Handle database exceptions
+
+Resource cleanup
+
+Close statement and connection
+
+Conclusion
+
+The updated PHP file addresses PHP 8.2 compatibility issues and prevents SQL injection while maintaining the original program's functionality.
+
+The program still retrieves orders by category, calculates the total amount, and displays the length of each order's note.
+
+Note: The original program does not display the calculated total or execute a sorting operation. These behaviors remain unchanged.
